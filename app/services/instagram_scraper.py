@@ -19,16 +19,32 @@ class InstagramScraper:
             page_content = login_information.text #this is being used to get the HTML token cotent
             #csrf is cross-site-requestt-forgery-protetction . it stops hackers fromjust trying mutliple insta users and passwords to get into the website 
             #they'd need to make it much harder for hackers
-
+#what this is doing is looking for security token in HTML looking for csrf
         if "csrf" in page_content: 
             print("found it")
             csrf_start = page_content.find("csrf")
             print("it appears around:" , csrf_start)
             print(page_content[csrf_start-50:csrf_start+150])
+        
         else:
             print("No CSRF token found")
             print(page_content[:2000]) #prints the firtst 500 characters of whats there.
-            
+        #the made point is to the extract the token value from this pattern
+    #find where the csrf_token starts 
+    
+        start_text = '"csrf_token":"' #what this is doing is finding where the csrf token exfsists in ur html 
+        start_pos = page_content.find(start_text)
+        #then we calcualte where the token starts at 
+        token_start = start_pos + len(start_text)
+        token_end = page_content.find( '"', token_start)
+        token = page_content[token_start : token_end]
+
+        
+        #extract token value 
+
+
+        
+        print(f" Extracted token : {token}")
 
 
 if __name__ == "__main__":
