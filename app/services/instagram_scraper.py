@@ -38,13 +38,28 @@ class InstagramScraper:
         token_start = start_pos + len(start_text)
         token_end = page_content.find( '"', token_start)
         token = page_content[token_start : token_end]
+        #extract token value
+       
 
-        
-        #extract token value 
-
-
-        
         print(f" Extracted token : {token}")
+
+         #extract login data like the password, username, and token
+        login_data = {
+            'username' : username, 
+            'password' : password, 
+            'csrfmiddlewaretoken' : token
+        } 
+        #this is jsut for succesful authenrication to precent cross site request. 
+        headers = {
+            'X-CSRFToken' : token, #this is telling insta like here is the secrutiy token you gave me and it matches it with the login page. also for preveting CSRF attacks
+            'X-Requested-With' : 'XMLHttpRequest', #tellis insta this is an AJAZ request from javsscript. insta knows to send bac the JSON instead of ht,l to make the request look like it came from a real browser
+            'Referer' : "https://www.instagram.com/accounts/login/", #this indicates the URL of yhe page thats intitaitn the requests
+            'Content-Type' : "application/x-www-form-urlencoded" #this is statign the type of data beign sent, tells insta im sending form data, 
+        }
+        login_response = self.session.post(
+            'https://www.instagram.com/accounts/login/ajax/'
+        )
+
 
 
 if __name__ == "__main__":
