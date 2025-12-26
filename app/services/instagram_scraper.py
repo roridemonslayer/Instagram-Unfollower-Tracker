@@ -1,9 +1,12 @@
-import requests #using this to get HTTP requests to post, get etc our data
+from selenium import webdriver #we're going to use selenium as an automator here that way insta doesn't detect us as a bot
+from selenium.webdriver.common.by import By 
+from selenium.webdriver.support.ui import WebDriverWait 
+from selenium.webdriver.support import expected_conditions as EC
 class InstagramScraper: 
     def __init__(self):
         #t6jtis creates a session to keep cookies (data) between sessions
         #and to make requests   
-        self.session = requests.Session()
+        self.session = webdriver.Chrome()
         self.is_logged_in = False #this js like ios saying the user hasn't logged in
     def login(self, username, password):
         print(f"trying to login as {username}")
@@ -56,9 +59,21 @@ class InstagramScraper:
             'Referer' : "https://www.instagram.com/accounts/login/", #this indicates the URL of yhe page thats intitaitn the requests
             'Content-Type' : "application/x-www-form-urlencoded" #this is statign the type of data beign sent, tells insta im sending form data, 
         }
-        login_response = self.session.post(
-            'https://www.instagram.com/accounts/login/ajax/'
+        login_response = self.session.post( #this sends a post request submitting form data from insta
+            'https://www.instagram.com/accounts/login/ajax/', #where ur sending the data
+            data = login_data, #what you're sending which is the username, password and token dictionary
+            headers = headers #how you're sending it like with speacil headers
+
         )
+        print("Login response status: ", login_response.status_code)
+        print("Login response text: ", login_response.text[:500])
+
+        #then we try to parse the JSON response 
+        try:
+            response_json = login_response.json()
+            print("Login result:", response_json)
+        except:
+            print("The response wasn't JSON")
 
 
 
