@@ -53,7 +53,7 @@ class InstagramScraper:
         print(f" Get the follower person username: {username}")
 
         """ we then need a place to navigate to get the user following"""
-        self.driver.get(f"https://www.instagram.com/accounts/{username}/")
+        self.driver.get(f"https://www.instagram.com/{username}/")
 
         time.sleep(3) 
 
@@ -71,8 +71,8 @@ class InstagramScraper:
 
 if __name__ == "__main__":
     scraper = InstagramScraper()
-   
-    scraper.login("username","pass")
+    scraper.login("theoneandonly3034","roriolaniyi123")
+    # You need to add this line:
+    scraper.get_following("theoneandonly3034")
     input("Press Enter to close browser...")
-
     scraper.driver.quit()
