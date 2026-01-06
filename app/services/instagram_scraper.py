@@ -250,33 +250,41 @@ class InstagramScraper:
         
 
     def find_unfollowers(self, following_list, followers_list):
-        '''finds the poeple you follow that don't follow you back'''
+        
         unfollowers = []
-        for person in following_list: #this goes to the usernmae in the following list one by one 
 
-        
-        
-
-
-
-
-
-
-
+        for person in following_list:
+            if person not in followers_list:
+                unfollowers.append(person)
+        return unfollowers
+       
 
 
 
 # This code runs when you execute the script
 if __name__ == "__main__":
+    
     # Create an instance of InstagramScraper
     scraper = InstagramScraper()
     
     # Log in with your credentials
-    scraper.login("username","password")
-    
-    # Get the list of people you're following
-    scraper.get_following("username")
-    scraper.get_followers("username")
+    scraper.login("theoneandonly3034","roriolaniyi123")
+
+    #get both list 
+    following = scraper.get_following("theoneandonly3034")
+    followers = scraper.get_followers("theoneandonly3034")
+
+    #find the unfolowers 
+    unfollowers = scraper.find_unfollowers(following, followers)
+
+    print(f"\n--- RESULTS ---")
+    print(f"You follow: {len(following)} people")
+    print(f"Follow you: {len(followers)} people")
+    print(f"Don't follow back: {len(unfollowers)} people")
+    print(f"\nPeople who don't follow you back:")
+    for user in unfollowers:
+        print(f"  - {user}")
+
     
     # Keep the browser open until you press Enter
     input("Press Enter to close browser...")
