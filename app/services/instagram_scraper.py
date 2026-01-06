@@ -234,7 +234,7 @@ class InstagramScraper:
                         following_list.append(username)
             
             # Print results
-            print(f"\nFound {len(following_list)} users you're following:")
+            print(f"\nFound {len(following_list)} users that are folliwng you:")
             # Print first 10 usernames as a preview
             for user in following_list[:10]:
                 print(f"  - {user}")
@@ -247,6 +247,14 @@ class InstagramScraper:
             print(f"An error occurred: {e}")
             self.driver.save_screenshot("debug.png")
             return []  # Return empty list if there was an error
+        
+
+    def find_unfollowers(self, following_list, followers_list):
+        '''finds the poeple you follow that don't follow you back'''
+        unfollowers = []
+        for person in following_list: #this goes to the usernmae in the following list one by one 
+
+        
         
 
 
@@ -264,11 +272,11 @@ if __name__ == "__main__":
     scraper = InstagramScraper()
     
     # Log in with your credentials
-    scraper.login("theoneandonly3034","roriolaniyi123")
+    scraper.login("username","password")
     
     # Get the list of people you're following
-    scraper.get_following("theoneandonly3034")
-    scraper.get_followers("theoneandonly3034")
+    scraper.get_following("username")
+    scraper.get_followers("username")
     
     # Keep the browser open until you press Enter
     input("Press Enter to close browser...")
