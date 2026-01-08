@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, func, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Mapped, relationship
+from app.models.user import User, FollowRelationship, Base
 from typing import List
 
 #all this is just doing is connection all of the stuff from our databse 

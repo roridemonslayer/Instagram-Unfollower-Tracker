@@ -6,11 +6,34 @@ import time
 
 class InstagramScraper: 
     def __init__(self):
-        # Creates a Chrome browser instance that Selenium will control
-        # This keeps cookies between requests so Instagram remembers we're logged in
-        self.driver = webdriver.Chrome()
-        self.is_logged_in = False # Tracks whether the user has successfully logged in
-    
+        from selenium.webdriver.chrome.options import Options
+        import os
+        
+        # Create a chrome_profile directory in your project
+        profile_dir = os.path.join(os.getcwd(), "chrome_profile")
+        if not os.path.exists(profile_dir):
+            os.makedirs(profile_dir)
+        
+        chrome_options = Options()
+        chrome_options.add_argument(f"--user-data-dir={profile_dir}")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        
+        self.driver = webdriver.Chrome(options=chrome_options)
+        self.is_logged_in = False
+
+
+
+
+
+
+
+
+
+
+
+
+        
     def login(self, username, password):
         print(f"trying to login as {username}")
         # Navigate to Instagram's login page
@@ -257,26 +280,112 @@ class InstagramScraper:
             if person not in followers_list:
                 unfollowers.append(person)
         return unfollowers
-       
+    def save_to_database(self, username, following_list, followers_list):
+    # this is where we're going to save the follower/following data to the database
+    # this imports the models and sets up the database 
+        from models.user import User, FollowRelationship, Base
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        
+        # first we have to make the database connection 
+        # this will connect our scraper to the database file instagram_tracker 
+        engine = create_engine('sqlite:///instagram_tracker.db')
+        
+        # then we need to create all the tables if they don't exist 
+        # it looks at our base models and creates the actual database tables 
+        Base.metadata.create_all(engine)
+        
+        # then we need to create a session which is opening a connection to talk to the database
+        # this is how we send commands to the database 
+        Session = sessionmaker(bind=engine)
+        session = Session()
+
+        try:
+            # then we need to check if the user already exists in the database 
+            # first we ask the database a question using Query
+            # then we use filter_by to find the rows where instagram_username matches 
+            # then we use first() to get the first result or none if no results
+            existing_user = session.query(User).filter_by(insta_user=username).first()
+            
+            # if the user doesn't exist, we create them 
+            if not existing_user:
+                print(f"creating the user name for {username}") 
+                new_user = User(
+                    email=f"{username}@placeholder.com",  # this is just the placeholder name 
+                    insta_user=username, 
+                    insta_password="encrypted_password",  # this is for password encryption 
+                    is_active=True  # this just tells us if the user is up and running 
+                )
+                # then we add this record to be saved 
+                session.add(new_user)
+                # then we need to save it to the db 
+                session.commit()
+                # then we need to set the existing_user to the one we just made 
+                existing_user = new_user
+                print(f"user {username} saved to the database")
+            else:
+                print(f"user {username} already exists gng")
+            
+            # this deletes the old relationships records for this user, we'll replace them with fresh data
+            # the delete() removes the records from the database 
+            session.query(FollowRelationship).filter_by(user_id=existing_user.id).delete()
+            session.commit()
+            print("deleted old relationship data")
+            
+            # save all the following relationships 
+            print(f"saving {len(following_list)} following relationships...")
+            for username_followed in following_list:
+                # checks if they follow you back 
+                they_follow_back = username_followed in followers_list
+                relationship = FollowRelationship(
+                    user_id=existing_user.id,  # link to the user
+                    instagram_user_id=username_followed,  # the person being followed
+                    username=username_followed, 
+                    full_name="",  # we don't have this data yet 
+                    profile_pic_url="",  # we don't have this data yet 
+                    i_follow_them=True,  # yes, you follow them 
+                    they_follow_me=they_follow_back  # true if they're in followers_list 
+                )
+                session.add(relationship)
+            
+            # save all changes at once 
+            session.commit()
+            print(f"successfully saved {len(following_list)} relationships to database")
+
+            # show summary 
+            total_relationships = session.query(FollowRelationship).filter_by(user_id=existing_user.id).count()
+            print(f"Total relationships in database: {total_relationships}")
+        
+        except Exception as e:
+            # If anything goes wrong, undo changes
+            print(f"Error saving to database: {e}")
+            session.rollback()
+        
+        finally:
+            # Always close the session when done
+            session.close()
+            
+
+
+
+
+
 
 
 
 # This code runs when you execute the script
 if __name__ == "__main__":
-    
-    # Create an instance of InstagramScraper
     scraper = InstagramScraper()
-    
-    # Log in with your credentials
     scraper.login("theoneandonly3034","roriolaniyi123")
 
-    #get both list 
+    # Get both lists
     following = scraper.get_following("theoneandonly3034")
     followers = scraper.get_followers("theoneandonly3034")
 
-    #find the unfolowers 
+    # Find unfollowers
     unfollowers = scraper.find_unfollowers(following, followers)
 
+    # Print results
     print(f"\n--- RESULTS ---")
     print(f"You follow: {len(following)} people")
     print(f"Follow you: {len(followers)} people")
@@ -285,9 +394,9 @@ if __name__ == "__main__":
     for user in unfollowers:
         print(f"  - {user}")
 
+    # NEW: Save to database
+    print("\n--- SAVING TO DATABASE ---")
+    scraper.save_to_database("theoneandonly3034", following, followers)
     
-    # Keep the browser open until you press Enter
     input("Press Enter to close browser...")
-    
-    # Close the browser
     scraper.driver.quit()
