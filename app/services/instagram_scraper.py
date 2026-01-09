@@ -384,13 +384,15 @@ class InstagramScraper:
 
 
 # This code runs when you execute the script
+
+# This code runs when you execute the script
 if __name__ == "__main__":
     scraper = InstagramScraper()
-    scraper.login("username","password")
+    scraper.login("theoneandonly3034","roriolaniyi123")
 
     # Get both lists
-    following = scraper.get_following("username")
-    followers = scraper.get_followers("username")
+    following = scraper.get_following("theoneandonly3034")
+    followers = scraper.get_followers("theoneandonly3034")
 
     # Find unfollowers
     unfollowers = scraper.find_unfollowers(following, followers)
@@ -410,3 +412,4 @@ if __name__ == "__main__":
     
     input("Press Enter to close browser...")
     scraper.driver.quit()
+    
