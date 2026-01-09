@@ -1,2 +1,3 @@
-2026/01/07-01:53:51.609 6d22a Creating DB /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb since it was missing.
-2026/01/07-01:53:51.616 6d22a Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/08-19:31:13.048 c9eaa Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/08-19:31:13.052 c9eaa Recovering log #4
+2026/01/08-19:31:13.052 c9eaa Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log 

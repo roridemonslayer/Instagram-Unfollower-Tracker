@@ -2,6 +2,13 @@ from selenium import webdriver  # we're going to use selenium as an automator he
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import sys
+import os
+# Add the parent directory to the path so we can import from app.models
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from models.user import User, FollowRelationship, Base
+
 import time
 
 class InstagramScraper: 
@@ -283,14 +290,17 @@ class InstagramScraper:
     def save_to_database(self, username, following_list, followers_list):
     # this is where we're going to save the follower/following data to the database
     # this imports the models and sets up the database 
-        from models.user import User, FollowRelationship, Base
+       
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         
         # first we have to make the database connection 
         # this will connect our scraper to the database file instagram_tracker 
-        engine = create_engine('sqlite:///instagram_tracker.db')
-        
+
+        import os 
+        db_path = os.path.join(os.path.dirname(__file__), 'instagram_tracker.db')
+        engine = create_engine(f'sqlite:///{db_path}')
+        print(f"Database will be created at: {db_path}")
         # then we need to create all the tables if they don't exist 
         # it looks at our base models and creates the actual database tables 
         Base.metadata.create_all(engine)
@@ -376,11 +386,11 @@ class InstagramScraper:
 # This code runs when you execute the script
 if __name__ == "__main__":
     scraper = InstagramScraper()
-    scraper.login("theoneandonly3034","roriolaniyi123")
+    scraper.login("username","password")
 
     # Get both lists
-    following = scraper.get_following("theoneandonly3034")
-    followers = scraper.get_followers("theoneandonly3034")
+    following = scraper.get_following("username")
+    followers = scraper.get_followers("username")
 
     # Find unfollowers
     unfollowers = scraper.find_unfollowers(following, followers)
