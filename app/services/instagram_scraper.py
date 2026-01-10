@@ -455,8 +455,58 @@ class InstagramScraper:
         except Exception as e:
             print(f"Error getting likers : {e}")
             return []
+    
+    def calculate_engagement_score(self, follower_usernmae, likes_count, comments_count, last_interaction):
+        '''
+        calcuates the 0-100 engagement score for a followers 
+        it'll find how mnay they've likes, how many comments they've left and the last date of their engagement 
+        '''
+        score = 0 
+
+        #pointers for likes (max 40 )
+        #if they likes 20+ posts, they get full 40 points 
+
+        likes_score = min((likes_count/20)*30,30)
+        score += likes_score 
 
         
+        #pointers for comments(if they comments 10+ times they get a full 30 points)
+
+        comments_score = min((comments_count/10) * 30, 30)
+        score += comments_score
+
+        #points for recenvy 
+
+        if last_interaction:
+            from datetime import datetime
+            days_ago = (datetime.now() - last_interaction).days
+
+            if days_ago <= 7: #engaged within the last week
+                recency_score = 30
+            elif days_ago <= 30: #engaged within last month 
+                recency_score = 15
+            else: #hasn't engaged in over a month 
+                recency_score = 0
+        else:
+            recency_score = 0 #never engaged 
+        score += recency_score
+
+        #deteremine engangemet level based on score 
+        if score >= 70:
+            level = "High"
+        elif score >= 30:
+            level = "Medium"
+        else:
+            level = "Low"
+
+        return {
+            'score':round(score, 2),
+            'level' : level 
+        }
+
+
+
+
             
 
 
