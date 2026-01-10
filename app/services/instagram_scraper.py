@@ -374,6 +374,35 @@ class InstagramScraper:
         finally:
             # Always close the session when done
             session.close()
+    def get_recent_posts(self, username, limit = 20):
+        '''this willg et the usrls of the recent post, 
+        ex: username: insta usenrmae 
+        limit : how many psots to get defualt is 20
+
+        returns :
+        list of posts urls 
+
+        '''
+        print(f"Getting recent posts for {username}...")
+
+        #goes to the users profile 
+        self.driver.get(f"https://www.instagram.com/{username}/")
+        time.sleep(3)
+
+        try :
+            #this finds all post links on the profile
+            post_elements = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_all_elements_located((By.XPATH, "//a[contains(@href, '/p/')]"))
+
+            )  
+            #extract just the urls from the element
+            post_urls = []
+            for element in post_elements[:limit]:
+                url = element.get_attribute('href')
+
+
+
+        
             
 
 
