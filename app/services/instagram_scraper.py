@@ -503,8 +503,62 @@ class InstagramScraper:
             'score':round(score, 2),
             'level' : level 
         }
+    def analyze_follower_engagement(self, username, follower_list):
+        '''this analyses the engagmenet for all followers and calcuatoes scores. 
+        it'll reutrn a dict mapping follw0er-username -> engagnement data'''
+        print(f"analyzing engagement for {len(follower_list)}")
 
+        #get recent post 
+        print("\n Getting your recent posts...")
+        post_urls = self.get_recent_posts(username, limit = 20)
 
+        if not post_urls:
+            print("no posts founds!")
+            return {}
+        # for each post, get wholike si t
+
+        print(f"\n analyzing {len(post_urls)} posts ...")
+        all_engagement = {} #
+
+        for i, post_urls in enumerate(post_urls):
+            print(f"\n analyzing post {i+1}/{len(post_urls)}...")
+            likers = self.get_post_likers(post_urls)
+
+            # For each liker, increment their engagement count
+
+            for liker in likers:
+                if liker in follower_list:
+                    if liker not in all_engagement:
+                        all_engagement[liker] = {
+                            'likes': 0,
+                            'comments' : 0,
+                            'last_interaction': None
+                        }
+                all_engagement[liker]['likes'] += 1
+            time.sleep(2)
+
+        print("\n Step 3: Calculating the engagement score")
+        result = {}
+
+        for follower in follower_list:
+            if follower in all_engagement:
+                engagement = all_engagement[follower]
+            else:
+                engagement = {'likes':0, 'comments': 0, 'last_interaction':None}
+            score_data = self.calculate_engagement_score(
+                follower, 
+                engagement['likes'],
+                engagement['comments'],
+                engagement['last_interaction']
+            )
+            result[follower] ={
+                'likes_count':engagement['likes'],
+                'comments_count':engagement['comments'],
+                'score' : score_data['score'],
+                'level' : score_data['level']
+
+            }
+            return result
 
 
             
