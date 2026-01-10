@@ -399,8 +399,62 @@ class InstagramScraper:
             post_urls = []
             for element in post_elements[:limit]:
                 url = element.get_attribute('href')
+                if url and url not in post_urls: #this is made to avoid duplicates
+                    post_urls.append(url)
+            print(f"FOUND {len(post_urls)} posts")
+            return post_urls 
+        except Exception as e:
+            print(f"Error getting posts: {e}")
+            return []
+        
+        #all of this goes to ur insta, finds all post links and returns a list of post urls
+        
+    def get_post_likers(self, post_url):
+        ''' what this does is, get a list of the usernames that liked a specific post, '''
+        print(f"getting users likers for post...")
 
+        self.driver.get(post_url)
+        time.sleep(3)
+        
+        try:
+            #this clicks the likes button on the post 
+            likes_button = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/liked_by/')]"))
+            )
+            likes_button.click()
+            time.sleep(2)
+            
+            likes_modal = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//div[@role='dialog']"))
 
+            )
+            #this scrolls through the lieks list to load all the likers 
+
+            last_height = self.driver.execute_script("return arguments[0].scrollHeight", likes_modal)
+
+            for i in range(10): #telling it to scroll 10 times, 
+                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", likes_modal)
+                time.sleep(1)
+                new_height = self.driver.execute_script("return arguments[0].scrollHeight", likes_modal)
+                if new_height == last_height:
+                    break 
+                last_height = new_height
+
+                #this takes all the usernames from the likes list 
+                liker_elements = likes_modal.find_elements(By.XPATH,".//a[contains(@href, '/')]")
+                likers = []
+
+                for element in liker_elements:
+                    href = element.get_attribute('href')
+                    if href and '/p/' not in href: #this filter outs post links and just keeps the profile links
+                        username = href.split('/'[-2]) #takes out the username from the url 
+                        if username and username not in likers:
+                            likers.append(username)
+                    print(f'Found{len(likers)} likers')
+                    return likers 
+        except Exception as e:
+            print(f"Error getting likers : {e}")
+            return []
 
         
             
