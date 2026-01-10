@@ -27,8 +27,9 @@ class FollowRelationship(Base):
     last_checked = Column(DateTime,default = func.now())
     user : Mapped["User"] = relationship(back_populates = "relationship")
 
-class EngagmenetScore:
-    __tablename__
+class EngagementScore:
+    __tablename__ = "engagement_score"
+    id = Column(Integer, primary_key = True)
     #note that when using back_poulates, conect it to the attrivuate not the class. 
 #want to go from follower relationship to user 
 #and user relaitosnhip to user  but we cna just add mapping to the two classes we have above
