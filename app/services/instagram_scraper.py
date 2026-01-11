@@ -559,9 +559,59 @@ class InstagramScraper:
 
             }
             return result
+    def save_engagement_scores(self, username, engagement_results):
+        '''saves engagement scores to the database'''
+        from models.engagement import EngagementScore
+        from models.user import User
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker 
+        import os
 
+        #connect it ot the database 
+        db_path = os.path.join(os.path.dirname(__file__), 'instagram.tracker.db')
+        engine = create_engine(f'sqlite:///{db_path}')
+        Session = sessionmaker(bind = engine)
+        session = Session()
 
-            
+        try:
+            #gets the user from the databse
+            user = session.query(User).filer_by(insta_user = username).first(0)
+
+            if not user:
+                print("user isn't in the database")
+                return
+            #deelte old engagment scores for this user 
+            session.query(EngagementScore).filter_by(user_id = user.id).delete(0)
+
+            #save new scores 
+
+            for follower_username, data in engagement_results.items():
+                score_record = EngagementScore(
+
+                    user_id = user.id, 
+                    follower_username = follower_username, 
+                    total_score = data['score'], 
+                    likes_count = data['likes_count'],
+                    comments_count = data['comments_count'],
+                    engagement_level = data['level']
+                )
+            session.commit()
+            print(f"\n Saved {len(engagement_results)} engagement scores to database")
+
+            #show summary 
+            high = sum(1 for d in engagement_results.values() if d['level'] == 'High')
+            medium= sum(1 for d in engagement_results.values() if d['level'] == 'Medium')
+            low = sum(1 for d in engagement_results.values() if d['level'] == 'Low')
+
+            print(f"\n🔥 High Engagement: {high} followers")
+            print(f"⚡ Medium Engagement: {medium} followers")
+            print(f"❄️  Low Engagement: {low} followers")
+
+        except Exception as e:
+            print(f"Error saving engagment scores: {e}")
+            session.rollbacl()
+        finally:
+            session.close()            
 
 
 
@@ -575,28 +625,29 @@ class InstagramScraper:
 # This code runs when you execute the script
 if __name__ == "__main__":
     scraper = InstagramScraper()
-    scraper.login("theoneandonly3034","roriolaniyi123")
-
-    # Get both lists
-    following = scraper.get_following("theoneandonly3034")
-    followers = scraper.get_followers("theoneandonly3034")
-
-    # Find unfollowers
-    unfollowers = scraper.find_unfollowers(following, followers)
-
-    # Print results
-    print(f"\n--- RESULTS ---")
-    print(f"You follow: {len(following)} people")
-    print(f"Follow you: {len(followers)} people")
-    print(f"Don't follow back: {len(unfollowers)} people")
-    print(f"\nPeople who don't follow you back:")
-    for user in unfollowers:
-        print(f"  - {user}")
-
-    # NEW: Save to database
-    print("\n--- SAVING TO DATABASE ---")
-    scraper.save_to_database("theoneandonly3034", following, followers)
+    scraper.login("roriforrealzz", "Godisgood123!")
     
-    input("Press Enter to close browser...")
+    # Get followers
+    followers = scraper.get_followers("roriforrealzz")
+    
+    # Analyze engagement (WARNING: This will take a while!)
+    engagement_results = scraper.analyze_follower_engagement("roriforrealzz", followers)
+    
+    # Save to database
+    scraper.save_engagement_scores("roriforrealzz", engagement_results)
+    
+    # Show top engagers
+    sorted_followers = sorted(
+        engagement_results.items(),
+        key=lambda x: x[1]['score'],
+        reverse=True
+    )
+    
+    print("\n=== TOP 10 MOST ENGAGED FOLLOWERS ===")
+    for i, (username, data) in enumerate(sorted_followers[:10]):
+        print(f"{i+1}. @{username}")
+        print(f"   Level: {data['level']} ({data['score']}/100)")
+        print(f"   Likes: {data['likes_count']}, Comments: {data['comments_count']}\n")
+    
+    input("Press Enter to close...")
     scraper.driver.quit()
-    
