@@ -625,16 +625,16 @@ class InstagramScraper:
 # This code runs when you execute the script
 if __name__ == "__main__":
     scraper = InstagramScraper()
-    scraper.login("roriforrealzz", "Godisgood123!")
+    scraper.login("username", "Godisgood123!")
     
     # Get followers
-    followers = scraper.get_followers("roriforrealzz")
+    followers = scraper.get_followers("username")
     
     # Analyze engagement (WARNING: This will take a while!)
-    engagement_results = scraper.analyze_follower_engagement("roriforrealzz", followers)
+    engagement_results = scraper.analyze_follower_engagement("username", followers)
     
     # Save to database
-    scraper.save_engagement_scores("roriforrealzz", engagement_results)
+    scraper.save_engagement_scores("username", engagement_results)
     
     # Show top engagers
     sorted_followers = sorted(

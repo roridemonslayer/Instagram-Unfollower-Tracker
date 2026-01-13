@@ -1,6 +1,4 @@
-2026/01/08-19:54:42.164 d0217 Creating DB /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/IndexedDB/https_www.instagram.com_0.indexeddb.leveldb since it was missing.
-2026/01/08-19:54:42.173 d0217 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/IndexedDB/https_www.instagram.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/01/08-19:54:44.069 d0217 Level-0 table #5: started
-2026/01/08-19:54:44.074 d0217 Level-0 table #5: 16720 bytes OK
-2026/01/08-19:54:44.077 d0217 Delete type=0 #3
-2026/01/08-19:54:44.078 d0219 Manual compaction at level-0 from '\x00\x08\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x09\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/01/11-23:34:54.134 408f6 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/IndexedDB/https_www.instagram.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/01/11-23:34:54.134 408f6 Recovering log #4
+2026/01/11-23:34:54.143 408f6 Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/IndexedDB/https_www.instagram.com_0.indexeddb.leveldb/000004.log 
+2026/01/11-23:34:55.749 4090a Manual compaction at level-0 from '\x00\x16\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x17\x00\x00\x00' @ 0 : 0; will stop at (end)

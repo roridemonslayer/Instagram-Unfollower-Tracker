@@ -1,4 +1,5 @@
-2026/01/08-19:54:38.431 d0263 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
-2026/01/08-19:54:38.435 d0263 Recovering log #4
-2026/01/08-19:54:38.436 d0263 (ignoring error) /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log: dropping 14863 bytes; Corruption: checksum mismatch
-2026/01/08-19:54:38.436 d0263 Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log 
+2026/01/11-23:34:46.938 40958 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/11-23:34:46.944 40958 Recovering log #4
+2026/01/11-23:34:46.944 40958 (ignoring error) /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log: dropping 21786 bytes; Corruption: checksum mismatch
+2026/01/11-23:34:46.944 40958 (ignoring error) /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log: dropping 966 bytes; Corruption: missing start of fragmented record(2)
+2026/01/11-23:34:46.945 40958 Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log 

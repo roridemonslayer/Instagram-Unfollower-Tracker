@@ -1,3 +1,5 @@
-2026/01/08-19:51:40.848 cf161 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
-2026/01/08-19:51:40.852 cf161 Recovering log #4
-2026/01/08-19:51:40.852 cf161 Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log 
+2026/01/11-23:34:18.539 404de Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/11-23:34:18.543 404de Recovering log #4
+2026/01/11-23:34:18.544 404de (ignoring error) /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log: dropping 21786 bytes; Corruption: checksum mismatch
+2026/01/11-23:34:18.544 404de (ignoring error) /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log: dropping 966 bytes; Corruption: missing start of fragmented record(2)
+2026/01/11-23:34:18.544 404de Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log 
