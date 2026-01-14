@@ -1,5 +1,14 @@
-2026/01/11-23:34:46.938 40958 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
-2026/01/11-23:34:46.944 40958 Recovering log #4
-2026/01/11-23:34:46.944 40958 (ignoring error) /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log: dropping 21786 bytes; Corruption: checksum mismatch
-2026/01/11-23:34:46.944 40958 (ignoring error) /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log: dropping 966 bytes; Corruption: missing start of fragmented record(2)
-2026/01/11-23:34:46.945 40958 Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000004.log 
+2026/01/13-18:54:29.537 b3ea7 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/13-18:54:29.542 b3ea7 Recovering log #13
+2026/01/13-18:54:29.542 b3ea7 Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000013.log 
+2026/01/13-18:55:29.549 b3eaa Level-0 table #17: started
+2026/01/13-18:55:29.554 b3eaa Level-0 table #17: 16898 bytes OK
+2026/01/13-18:55:29.558 b3eaa Delete type=0 #13
+2026/01/13-18:55:29.561 b3ea7 Compacting 4@0 + 0@1 files
+2026/01/13-18:55:29.564 b3ea7 Generated table #18@0: 350 keys, 27096 bytes
+2026/01/13-18:55:29.564 b3ea7 Compacted 4@0 + 0@1 files => 27096 bytes
+2026/01/13-18:55:29.566 b3ea7 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/01/13-18:55:29.567 b3ea7 Delete type=2 #14
+2026/01/13-18:55:29.567 b3ea7 Delete type=2 #17
+2026/01/13-18:55:29.567 b3ea7 Delete type=2 #7
+2026/01/13-18:55:29.567 b3ea7 Delete type=2 #11

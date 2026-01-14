@@ -1,22 +1,19 @@
-from selenium import webdriver  # we're going to use selenium as an automator here that way insta doesn't detect us as a bot
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 import sys
 import os
-# Add the parent directory to the path so we can import from app.models
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.user import User, FollowRelationship, Base
-
 import time
 
 class InstagramScraper: 
     def __init__(self):
         from selenium.webdriver.chrome.options import Options
-        import os
         
-        # Create a chrome_profile directory in your project
         profile_dir = os.path.join(os.getcwd(), "chrome_profile")
         if not os.path.exists(profile_dir):
             os.makedirs(profile_dir)
@@ -28,626 +25,548 @@ class InstagramScraper:
         
         self.driver = webdriver.Chrome(options=chrome_options)
         self.is_logged_in = False
-
-
-
-
-
-
-
-
-
-
-
-
         
     def login(self, username, password):
-        print(f"trying to login as {username}")
-        # Navigate to Instagram's login page
+        print(f"Attempting to login as {username}")
         self.driver.get("https://www.instagram.com/accounts/login/")
         
         try:
-            # Wait up to 15 seconds for the username input box to appear on the page
             username_input = WebDriverWait(self.driver, 15).until(
                 EC.presence_of_element_located((By.NAME, "username"))
             )
-            # Type the username into the input box
             username_input.send_keys(username)
 
-            # Find the password input box and type the password
             password_input = self.driver.find_element(By.NAME, "password")
             password_input.send_keys(password)
 
-            # Find the submit button and click it to log in
             login_button = self.driver.find_element(By.XPATH, "//button[@type='submit']")
             login_button.click()
             
-            # Wait 10 seconds for Instagram to process the login
             time.sleep(10)
             
-            # Instagram shows popups after login - dismiss them
-            # Try to click "Not now" on the "Save Login Info" popup
+            # Dismiss popups
             try:
                 not_now_button = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Not now') or contains(text(), 'Not Now')]")
                 not_now_button.click()
                 time.sleep(2)
             except:
-                pass  # If popup doesn't appear, that's fine - just continue
+                pass
             
-            # Try to dismiss the notifications popup if it appears
             try:
                 not_now_button = self.driver.find_element(By.XPATH, "//button[contains(text(), 'Not now') or contains(text(), 'Not Now')]")
                 not_now_button.click()
                 time.sleep(2)
             except:
-                pass  # If popup doesn't appear, that's fine
+                pass
             
-            print(f"After login, current URL: {self.driver.current_url}")
-            
-            # Check if we successfully logged in by seeing if we left the login page
             if "accounts/login" not in self.driver.current_url:
-                print("login works")
+                print("✓ Login successful")
                 self.is_logged_in = True
             else:
-                print("login failed")
+                print("✗ Login failed")
                 self.is_logged_in = False
                 
         except Exception as e:
-            print(f"Error During login: {e}")
+            print(f"Error during login: {e}")
             self.is_logged_in = False
 
-    def get_following(self, username):
-        """Gets the list of accounts that the user is following"""
-        print(f"Get the follower person username: {username}")
-
-        # Navigate to the user's Instagram profile page
-        self.driver.get(f"https://www.instagram.com/{username}/")
+    def _find_scroll_container(self):
+        """Try multiple ways to find the scrollable container"""
+        selectors = [
+            "//div[@role='dialog']//div[contains(@style, 'overflow')]",
+            "//div[@role='dialog']//div[@class and contains(@class, '_aano')]",
+            "//div[@role='dialog']//div[contains(@class, 'isgrP')]",
+            "//div[@role='dialog']",
+            "//div[contains(@class, 'x1n2onr6')]",
+            "//div[contains(@class, '_aano')]"
+        ]
         
-        # Wait 3 seconds for the profile page to load
-        time.sleep(3) 
+        for selector in selectors:
+            try:
+                element = self.driver.find_element(By.XPATH, selector)
+                print(f"✓ Found container with selector: {selector}")
+                return element
+            except:
+                continue
+        
+        print("❌ Could not find scroll container with any selector!")
+        return None
+
+    def get_following(self, username, max_following=None):
+        """Gets following list - NEW APPROACH"""
+        print(f"\n{'='*60}")
+        print(f"Getting following list for: {username}")
+        print(f"{'='*60}")
+        self.driver.get(f"https://www.instagram.com/{username}/")
+        time.sleep(5)
 
         try:
-            # Find the "following" link on the profile and wait until it's clickable
-            # The link has '/following' in its href attribute
+            # Get expected count
+            try:
+                following_elem = self.driver.find_element(By.XPATH, "//a[contains(@href, '/following')]")
+                expected_text = following_elem.text
+                print(f"🎯 Profile shows: {expected_text}")
+            except:
+                print("⚠️  Could not read following count")
+            
+            # Click following button
             following = WebDriverWait(self.driver, 15).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/following')]"))
             )
-            print(f"Found following link")
-            
-            # Click the following link to open the popup
             following.click()
-            print("Clicked following!")
+            print("✓ Clicked following button")
+            time.sleep(10)  # Longer wait
             
-            # Wait 5 seconds for the following popup/modal to appear
-            time.sleep(5)
+            # Take screenshot to see what we're working with
+            self.driver.save_screenshot("following_modal_structure.png")
+            print("📸 Screenshot saved")
             
-            print("Starting to scrape usernames...")
+            # Try to find the scroll container
+            scroll_box = self._find_scroll_container()
+            if not scroll_box:
+                print("❌ CRITICAL: Cannot find scroll container!")
+                return []
             
-            # Find the scrollable container inside the popup
-            # Instagram puts following list in a div with 'overflow' style
-            scroll_box = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//div[@role='dialog']//div[contains(@style, 'overflow')]"))
-            )
+            # Get all usernames using multiple methods
+            following_set = set()
+            scroll_count = 0
+            max_scrolls = 3000
+            stale_count = 0
             
-            # Get the initial height of the scrollable area
-            # We'll use this to know when we've reached the bottom
-            last_height = self.driver.execute_script("return arguments[0].scrollHeight", scroll_box)
+            print("\n🔄 Starting scroll process...")
+            print("=" * 60)
             
-            # Scroll through the popup to load all users
-            # Instagram lazy-loads users as you scroll, so we need to scroll to see everyone
-            for i in range(10):  # Scroll up to 10 times
-                # Scroll to the bottom of the container
-                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scroll_box)
+            last_height = self.driver.execute_script("return document.body.scrollHeight")
+            
+            while scroll_count < max_scrolls:
+                # METHOD 1: Find all profile links
+                try:
+                    links = self.driver.find_elements(By.TAG_NAME, "a")
+                    for link in links:
+                        try:
+                            href = link.get_attribute("href")
+                            if href and "instagram.com/" in href:
+                                # Extract username from URL
+                                parts = href.split("instagram.com/")[-1].split("/")
+                                if len(parts) > 0:
+                                    potential_username = parts[0]
+                                    # Filter out non-usernames
+                                    if potential_username and not any(x in potential_username for x in 
+                                        ['explore', 'direct', 'accounts', 'p', 'reels', 'tv', '?', '=']):
+                                        if len(potential_username) > 0 and len(potential_username) < 31:
+                                            following_set.add(potential_username)
+                        except:
+                            continue
+                except Exception as e:
+                    print(f"Error in extraction: {e}")
                 
-                # Wait 2 seconds for Instagram to load more users
-                time.sleep(2)
+                current_count = len(following_set)
                 
-                # Check the new height after scrolling
-                new_height = self.driver.execute_script("return arguments[0].scrollHeight", scroll_box)
+                # SCROLL METHOD 1: Scroll the dialog
+                try:
+                    self.driver.execute_script("""
+                        var dialog = document.querySelector('div[role="dialog"]');
+                        if (dialog) {
+                            var scrollable = dialog.querySelector('div[style*="overflow"]');
+                            if (scrollable) {
+                                scrollable.scrollTop = scrollable.scrollHeight;
+                            }
+                        }
+                    """)
+                except:
+                    pass
                 
-                # If height didn't change, we've reached the end - stop scrolling
-                if new_height == last_height:
+                # SCROLL METHOD 2: Send Page Down key
+                try:
+                    body = self.driver.find_element(By.TAG_NAME, "body")
+                    body.send_keys(Keys.PAGE_DOWN)
+                except:
+                    pass
+                
+                # SCROLL METHOD 3: JavaScript scroll
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                
+                time.sleep(2)  # Wait for content to load
+                
+                # Check progress
+                new_count = len(following_set)
+                if new_count > current_count:
+                    stale_count = 0
+                    if scroll_count % 20 == 0:
+                        print(f"📊 Scroll #{scroll_count}: Found {new_count} accounts")
+                else:
+                    stale_count += 1
+                
+                # Check if we're stuck
+                if stale_count >= 20:
+                    print(f"\n⚠️  Stuck at {new_count} accounts after 20 attempts")
+                    
+                    # AGGRESSIVE FINAL ATTEMPT
+                    print("🔥 Trying aggressive final scroll...")
+                    for i in range(30):
+                        self.driver.execute_script("""
+                            var dialogs = document.querySelectorAll('div[role="dialog"]');
+                            dialogs.forEach(function(dialog) {
+                                var scrollables = dialog.querySelectorAll('div');
+                                scrollables.forEach(function(s) {
+                                    s.scrollTop = s.scrollHeight;
+                                });
+                            });
+                        """)
+                        self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_DOWN)
+                        time.sleep(0.5)
+                    
+                    time.sleep(3)
+                    
+                    # Extract one more time
+                    links = self.driver.find_elements(By.TAG_NAME, "a")
+                    for link in links:
+                        try:
+                            href = link.get_attribute("href")
+                            if href and "instagram.com/" in href:
+                                parts = href.split("instagram.com/")[-1].split("/")
+                                if len(parts) > 0:
+                                    potential_username = parts[0]
+                                    if potential_username and not any(x in potential_username for x in 
+                                        ['explore', 'direct', 'accounts', 'p', 'reels', 'tv', '?', '=']):
+                                        if len(potential_username) > 0 and len(potential_username) < 31:
+                                            following_set.add(potential_username)
+                        except:
+                            continue
+                    
+                    final_count = len(following_set)
+                    if final_count == new_count:
+                        print(f"✓ Confirmed: Cannot get more than {final_count} accounts")
+                        print(f"⚠️  Instagram is blocking us - this is a rate limit issue")
+                        break
+                    else:
+                        print(f"✓ Got {final_count - new_count} more! Continuing...")
+                        stale_count = 0
+                
+                scroll_count += 1
+                
+                if max_following and len(following_set) >= max_following:
                     break
-                    
-                # Update last_height for next iteration
-                last_height = new_height
             
-            # Now extract all the usernames from the popup
-            # Find all links (a tags) that have an href attribute
-            user_elements = scroll_box.find_elements(By.XPATH, ".//a[contains(@href, '/')]")
+            following_list = list(following_set)
             
-            # Create an empty list to store usernames
-            following_list = []
+            # Filter out common non-usernames
+            following_list = [u for u in following_list if u not in 
+                ['', 'instagram', 'login', 'accounts', 'explore', 'direct']]
             
-            # Loop through each link we found
-            for user in user_elements:
-                # Get the href attribute (the URL)
-                href = user.get_attribute("href")
-                
-                # Check if href exists and has enough slashes (valid profile link)
-                # Valid profile links look like: https://instagram.com/username/
-                if href and href.count("/") >= 4:
-                    # Split the URL by "/" and get the username (second to last part)
-                    username = href.split("/")[-2]
-                    
-                    # Only add if username exists and isn't already in our list (no duplicates)
-                    if username and username not in following_list:
-                        following_list.append(username)
+            print(f"\n{'='*60}")
+            print(f"✅ FINAL RESULT: {len(following_list)} accounts found")
+            print(f"{'='*60}")
             
-            # Print results
-            print(f"\nFound {len(following_list)} users you're following:")
-            # Print first 10 usernames as a preview
-            for user in following_list[:10]:
-                print(f"  - {user}")
+            # Save to file
+            with open("following_list_debug.txt", "w") as f:
+                for user in sorted(following_list):
+                    f.write(f"{user}\n")
+            print("📝 Saved to: following_list_debug.txt")
             
-            # Return the complete list of usernames
+            # Close modal
+            try:
+                self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
+            except:
+                pass
+            
             return following_list
 
         except Exception as e:
-            # If anything goes wrong, print the error and take a screenshot for debugging
-            print(f"An error occurred: {e}")
-            self.driver.save_screenshot("debug.png")
-            return []  # Return empty list if there was an error
-        
-    def get_followers(self, username):
-        #this is the function we're using to pull the users followers 
-        print(f"Get the users followers: {username}")
-        self.driver.get(f"https://www.instagram.com/{username}/")
-        time.sleep(3) 
+            print(f"❌ ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+            self.driver.save_screenshot("following_error_detailed.png")
+            return []
 
+    def get_followers(self, username, max_followers=None):
+        """Gets followers - NEW APPROACH"""
+        print(f"\n{'='*60}")
+        print(f"Getting followers for: {username}")
+        print(f"{'='*60}")
+        self.driver.get(f"https://www.instagram.com/{username}/")
+        time.sleep(5)
+        
         try:
-            # Find the "following" link on the profile and wait until it's clickable
-            # The link has '/following' in its href attribute
-            following = WebDriverWait(self.driver, 15).until(
+            # Get expected count
+            try:
+                followers_elem = self.driver.find_element(By.XPATH, "//a[contains(@href, '/followers')]")
+                expected_text = followers_elem.text
+                print(f"🎯 Profile shows: {expected_text}")
+            except:
+                print("⚠️  Could not read follower count")
+            
+            # Click followers
+            followers_btn = WebDriverWait(self.driver, 15).until(
                 EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/followers')]"))
             )
-            print(f"Found follower link")
+            followers_btn.click()
+            print("✓ Clicked followers button")
+            time.sleep(10)
             
-            # Click the following link to open the popup
-            following.click()
-            print("Clicked follower!")
+            self.driver.save_screenshot("followers_modal_structure.png")
+            print("📸 Screenshot saved")
             
-            # Wait 5 seconds for the following popup/modal to appear
-            time.sleep(5)
+            scroll_box = self._find_scroll_container()
+            if not scroll_box:
+                print("❌ CRITICAL: Cannot find scroll container!")
+                return []
             
-            print("Starting to scrape usernames...")
+            followers_set = set()
+            scroll_count = 0
+            max_scrolls = 3000
+            stale_count = 0
             
-            # Find the scrollable container inside the popup
-            # Instagram puts following list in a div with 'overflow' style
-            scroll_box = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//div[@role='dialog']//div[contains(@style, 'overflow')]"))
-            )
+            print("\n🔄 Starting scroll process...")
+            print("=" * 60)
             
-            # Get the initial height of the scrollable area
-            # We'll use this to know when we've reached the bottom
-            last_height = self.driver.execute_script("return arguments[0].scrollHeight", scroll_box)
-            
-            # Scroll through the popup to load all users
-            # Instagram lazy-loads users as you scroll, so we need to scroll to see everyone
-            for i in range(10):  # Scroll up to 10 times
-                # Scroll to the bottom of the container
-                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", scroll_box)
+            while scroll_count < max_scrolls:
+                # Extract all usernames
+                try:
+                    links = self.driver.find_elements(By.TAG_NAME, "a")
+                    for link in links:
+                        try:
+                            href = link.get_attribute("href")
+                            if href and "instagram.com/" in href:
+                                parts = href.split("instagram.com/")[-1].split("/")
+                                if len(parts) > 0:
+                                    potential_username = parts[0]
+                                    if potential_username and not any(x in potential_username for x in 
+                                        ['explore', 'direct', 'accounts', 'p', 'reels', 'tv', '?', '=']):
+                                        if len(potential_username) > 0 and len(potential_username) < 31:
+                                            followers_set.add(potential_username)
+                        except:
+                            continue
+                except:
+                    pass
                 
-                # Wait 2 seconds for Instagram to load more users
+                current_count = len(followers_set)
+                
+                # Multiple scroll methods
+                try:
+                    self.driver.execute_script("""
+                        var dialog = document.querySelector('div[role="dialog"]');
+                        if (dialog) {
+                            var scrollable = dialog.querySelector('div[style*="overflow"]');
+                            if (scrollable) {
+                                scrollable.scrollTop = scrollable.scrollHeight;
+                            }
+                        }
+                    """)
+                except:
+                    pass
+                
+                try:
+                    self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_DOWN)
+                except:
+                    pass
+                
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                
                 time.sleep(2)
                 
-                # Check the new height after scrolling
-                new_height = self.driver.execute_script("return arguments[0].scrollHeight", scroll_box)
+                new_count = len(followers_set)
+                if new_count > current_count:
+                    stale_count = 0
+                    if scroll_count % 20 == 0:
+                        print(f"📊 Scroll #{scroll_count}: Found {new_count} followers")
+                else:
+                    stale_count += 1
                 
-                # If height didn't change, we've reached the end - stop scrolling
-                if new_height == last_height:
+                if stale_count >= 20:
+                    print(f"\n⚠️  Stuck at {new_count} followers")
+                    print("🔥 Final aggressive attempt...")
+                    
+                    for i in range(30):
+                        self.driver.execute_script("""
+                            var dialogs = document.querySelectorAll('div[role="dialog"]');
+                            dialogs.forEach(function(dialog) {
+                                var scrollables = dialog.querySelectorAll('div');
+                                scrollables.forEach(function(s) {
+                                    s.scrollTop = s.scrollHeight;
+                                });
+                            });
+                        """)
+                        self.driver.find_element(By.TAG_NAME, "body").send_keys(Keys.PAGE_DOWN)
+                        time.sleep(0.5)
+                    
+                    time.sleep(3)
+                    
+                    links = self.driver.find_elements(By.TAG_NAME, "a")
+                    for link in links:
+                        try:
+                            href = link.get_attribute("href")
+                            if href and "instagram.com/" in href:
+                                parts = href.split("instagram.com/")[-1].split("/")
+                                if len(parts) > 0:
+                                    potential_username = parts[0]
+                                    if potential_username and not any(x in potential_username for x in 
+                                        ['explore', 'direct', 'accounts', 'p', 'reels', 'tv', '?', '=']):
+                                        if len(potential_username) > 0 and len(potential_username) < 31:
+                                            followers_set.add(potential_username)
+                        except:
+                            continue
+                    
+                    final_count = len(followers_set)
+                    if final_count == new_count:
+                        print(f"✓ Confirmed: Stuck at {final_count} followers")
+                        print(f"⚠️  Instagram rate limiting detected")
+                        break
+                    else:
+                        stale_count = 0
+                
+                scroll_count += 1
+                
+                if max_followers and len(followers_set) >= max_followers:
                     break
-                    
-                # Update last_height for next iteration
-                last_height = new_height
             
-            # Now extract all the usernames from the popup
-            # Find all links (a tags) that have an href attribute
-            user_elements = scroll_box.find_elements(By.XPATH, ".//a[contains(@href, '/')]")
+            followers_list = list(followers_set)
+            followers_list = [u for u in followers_list if u not in 
+                ['', 'instagram', 'login', 'accounts', 'explore', 'direct']]
             
-            # Create an empty list to store usernames
-            following_list = []
+            print(f"\n{'='*60}")
+            print(f"✅ FINAL RESULT: {len(followers_list)} followers found")
+            print(f"{'='*60}")
             
-            # Loop through each link we found
-            for user in user_elements:
-                # Get the href attribute (the URL)
-                href = user.get_attribute("href")
-                
-                # Check if href exists and has enough slashes (valid profile link)
-                # Valid profile links look like: https://instagram.com/username/
-                if href and href.count("/") >= 4:
-                    # Split the URL by "/" and get the username (second to last part)
-                    username = href.split("/")[-2]
-                    
-                    # Only add if username exists and isn't already in our list (no duplicates)
-                    if username and username not in following_list:
-                        following_list.append(username)
+            with open("followers_list_debug.txt", "w") as f:
+                for user in sorted(followers_list):
+                    f.write(f"{user}\n")
+            print("📝 Saved to: followers_list_debug.txt")
             
-            # Print results
-            print(f"\nFound {len(following_list)} users that are folliwng you:")
-            # Print first 10 usernames as a preview
-            for user in following_list[:10]:
-                print(f"  - {user}")
+            try:
+                self.driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.ESCAPE)
+            except:
+                pass
             
-            # Return the complete list of usernames
-            return following_list
-
+            return followers_list
+            
         except Exception as e:
-            # If anything goes wrong, print the error and take a screenshot for debugging
-            print(f"An error occurred: {e}")
-            self.driver.save_screenshot("debug.png")
-            return []  # Return empty list if there was an error
-        
+            print(f"❌ ERROR: {e}")
+            import traceback
+            traceback.print_exc()
+            self.driver.save_screenshot("followers_error_detailed.png")
+            return []
 
     def find_unfollowers(self, following_list, followers_list):
-        
-        unfollowers = []
+        return [u for u in following_list if u not in followers_list]
 
-        for person in following_list:
-            if person not in followers_list:
-                unfollowers.append(person)
-        return unfollowers
     def save_to_database(self, username, following_list, followers_list):
-    # this is where we're going to save the follower/following data to the database
-    # this imports the models and sets up the database 
-       
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         
-        # first we have to make the database connection 
-        # this will connect our scraper to the database file instagram_tracker 
-
-        import os 
         db_path = os.path.join(os.path.dirname(__file__), 'instagram_tracker.db')
         engine = create_engine(f'sqlite:///{db_path}')
-        print(f"Database will be created at: {db_path}")
-        # then we need to create all the tables if they don't exist 
-        # it looks at our base models and creates the actual database tables 
         Base.metadata.create_all(engine)
-        
-        # then we need to create a session which is opening a connection to talk to the database
-        # this is how we send commands to the database 
         Session = sessionmaker(bind=engine)
         session = Session()
 
         try:
-            # then we need to check if the user already exists in the database 
-            # first we ask the database a question using Query
-            # then we use filter_by to find the rows where instagram_username matches 
-            # then we use first() to get the first result or none if no results
             existing_user = session.query(User).filter_by(insta_user=username).first()
             
-            # if the user doesn't exist, we create them 
             if not existing_user:
-                print(f"creating the user name for {username}") 
                 new_user = User(
-                    email=f"{username}@placeholder.com",  # this is just the placeholder name 
-                    insta_user=username, 
-                    insta_password="encrypted_password",  # this is for password encryption 
-                    is_active=True  # this just tells us if the user is up and running 
+                    email=f"{username}@placeholder.com",
+                    insta_user=username,
+                    insta_password="encrypted_password",
+                    is_active=True
                 )
-                # then we add this record to be saved 
                 session.add(new_user)
-                # then we need to save it to the db 
                 session.commit()
-                # then we need to set the existing_user to the one we just made 
                 existing_user = new_user
-                print(f"user {username} saved to the database")
+                print(f"✓ User {username} created")
             else:
-                print(f"user {username} already exists gng")
+                print(f"✓ User {username} exists")
             
-            # this deletes the old relationships records for this user, we'll replace them with fresh data
-            # the delete() removes the records from the database 
             session.query(FollowRelationship).filter_by(user_id=existing_user.id).delete()
             session.commit()
-            print("deleted old relationship data")
             
-            # save all the following relationships 
-            print(f"saving {len(following_list)} following relationships...")
             for username_followed in following_list:
-                # checks if they follow you back 
                 they_follow_back = username_followed in followers_list
                 relationship = FollowRelationship(
-                    user_id=existing_user.id,  # link to the user
-                    instagram_user_id=username_followed,  # the person being followed
-                    username=username_followed, 
-                    full_name="",  # we don't have this data yet 
-                    profile_pic_url="",  # we don't have this data yet 
-                    i_follow_them=True,  # yes, you follow them 
-                    they_follow_me=they_follow_back  # true if they're in followers_list 
+                    user_id=existing_user.id,
+                    instagram_user_id=username_followed,
+                    username=username_followed,
+                    full_name="",
+                    profile_pic_url="",
+                    i_follow_them=True,
+                    they_follow_me=they_follow_back
                 )
                 session.add(relationship)
             
-            # save all changes at once 
             session.commit()
-            print(f"successfully saved {len(following_list)} relationships to database")
-
-            # show summary 
-            total_relationships = session.query(FollowRelationship).filter_by(user_id=existing_user.id).count()
-            print(f"Total relationships in database: {total_relationships}")
+            print(f"✓ Saved {len(following_list)} relationships to database")
         
         except Exception as e:
-            # If anything goes wrong, undo changes
-            print(f"Error saving to database: {e}")
+            print(f"Database error: {e}")
             session.rollback()
-        
         finally:
-            # Always close the session when done
             session.close()
-    def get_recent_posts(self, username, limit = 20):
-        '''this willg et the usrls of the recent post, 
-        ex: username: insta usenrmae 
-        limit : how many psots to get defualt is 20
 
-        returns :
-        list of posts urls 
-
-        '''
-        print(f"Getting recent posts for {username}...")
-
-        #goes to the users profile 
-        self.driver.get(f"https://www.instagram.com/{username}/")
-        time.sleep(3)
-
-        try :
-            #this finds all post links on the profile
-            post_elements = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_all_elements_located((By.XPATH, "//a[contains(@href, '/p/')]"))
-
-            )  
-            #extract just the urls from the element
-            post_urls = []
-            for element in post_elements[:limit]:
-                url = element.get_attribute('href')
-                if url and url not in post_urls: #this is made to avoid duplicates
-                    post_urls.append(url)
-            print(f"FOUND {len(post_urls)} posts")
-            return post_urls 
-        except Exception as e:
-            print(f"Error getting posts: {e}")
-            return []
-        
-        #all of this goes to ur insta, finds all post links and returns a list of post urls
-        
-    def get_post_likers(self, post_url):
-        ''' what this does is, get a list of the usernames that liked a specific post, '''
-        print(f"getting users likers for post...")
-
-        self.driver.get(post_url)
-        time.sleep(3)
-        
-        try:
-            #this clicks the likes button on the post 
-            likes_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//a[contains(@href, '/liked_by/')]"))
-            )
-            likes_button.click()
-            time.sleep(2)
-            
-            likes_modal = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, "//div[@role='dialog']"))
-
-            )
-            #this scrolls through the lieks list to load all the likers 
-
-            last_height = self.driver.execute_script("return arguments[0].scrollHeight", likes_modal)
-
-            for i in range(10): #telling it to scroll 10 times, 
-                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", likes_modal)
-                time.sleep(1)
-                new_height = self.driver.execute_script("return arguments[0].scrollHeight", likes_modal)
-                if new_height == last_height:
-                    break 
-                last_height = new_height
-
-                #this takes all the usernames from the likes list 
-                liker_elements = likes_modal.find_elements(By.XPATH,".//a[contains(@href, '/')]")
-                likers = []
-
-                for element in liker_elements:
-                    href = element.get_attribute('href')
-                    if href and '/p/' not in href: #this filter outs post links and just keeps the profile links
-                        username = href.split('/'[-2]) #takes out the username from the url 
-                        if username and username not in likers:
-                            likers.append(username)
-                    print(f'Found{len(likers)} likers')
-                    return likers 
-        except Exception as e:
-            print(f"Error getting likers : {e}")
-            return []
-    
-    def calculate_engagement_score(self, follower_usernmae, likes_count, comments_count, last_interaction):
-        '''
-        calcuates the 0-100 engagement score for a followers 
-        it'll find how mnay they've likes, how many comments they've left and the last date of their engagement 
-        '''
-        score = 0 
-
-        #pointers for likes (max 40 )
-        #if they likes 20+ posts, they get full 40 points 
-
-        likes_score = min((likes_count/20)*30,30)
-        score += likes_score 
-
-        
-        #pointers for comments(if they comments 10+ times they get a full 30 points)
-
-        comments_score = min((comments_count/10) * 30, 30)
-        score += comments_score
-
-        #points for recenvy 
-
-        if last_interaction:
-            from datetime import datetime
-            days_ago = (datetime.now() - last_interaction).days
-
-            if days_ago <= 7: #engaged within the last week
-                recency_score = 30
-            elif days_ago <= 30: #engaged within last month 
-                recency_score = 15
-            else: #hasn't engaged in over a month 
-                recency_score = 0
-        else:
-            recency_score = 0 #never engaged 
-        score += recency_score
-
-        #deteremine engangemet level based on score 
-        if score >= 70:
-            level = "High"
-        elif score >= 30:
-            level = "Medium"
-        else:
-            level = "Low"
-
-        return {
-            'score':round(score, 2),
-            'level' : level 
-        }
-    def analyze_follower_engagement(self, username, follower_list):
-        '''this analyses the engagmenet for all followers and calcuatoes scores. 
-        it'll reutrn a dict mapping follw0er-username -> engagnement data'''
-        print(f"analyzing engagement for {len(follower_list)}")
-
-        #get recent post 
-        print("\n Getting your recent posts...")
-        post_urls = self.get_recent_posts(username, limit = 20)
-
-        if not post_urls:
-            print("no posts founds!")
-            return {}
-        # for each post, get wholike si t
-
-        print(f"\n analyzing {len(post_urls)} posts ...")
-        all_engagement = {} #
-
-        for i, post_urls in enumerate(post_urls):
-            print(f"\n analyzing post {i+1}/{len(post_urls)}...")
-            likers = self.get_post_likers(post_urls)
-
-            # For each liker, increment their engagement count
-
-            for liker in likers:
-                if liker in follower_list:
-                    if liker not in all_engagement:
-                        all_engagement[liker] = {
-                            'likes': 0,
-                            'comments' : 0,
-                            'last_interaction': None
-                        }
-                all_engagement[liker]['likes'] += 1
-            time.sleep(2)
-
-        print("\n Step 3: Calculating the engagement score")
-        result = {}
-
-        for follower in follower_list:
-            if follower in all_engagement:
-                engagement = all_engagement[follower]
-            else:
-                engagement = {'likes':0, 'comments': 0, 'last_interaction':None}
-            score_data = self.calculate_engagement_score(
-                follower, 
-                engagement['likes'],
-                engagement['comments'],
-                engagement['last_interaction']
-            )
-            result[follower] ={
-                'likes_count':engagement['likes'],
-                'comments_count':engagement['comments'],
-                'score' : score_data['score'],
-                'level' : score_data['level']
-
-            }
-            return result
-    def save_engagement_scores(self, username, engagement_results):
-        '''saves engagement scores to the database'''
-        from models.engagement import EngagementScore
-        from models.user import User
+    def print_database_summary(self, username):
         from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker 
-        import os
-
-        #connect it ot the database 
-        db_path = os.path.join(os.path.dirname(__file__), 'instagram.tracker.db')
+        from sqlalchemy.orm import sessionmaker
+        
+        db_path = os.path.join(os.path.dirname(__file__), 'instagram_tracker.db')
         engine = create_engine(f'sqlite:///{db_path}')
-        Session = sessionmaker(bind = engine)
+        Session = sessionmaker(bind=engine)
         session = Session()
-
+        
         try:
-            #gets the user from the databse
-            user = session.query(User).filer_by(insta_user = username).first(0)
-
+            user = session.query(User).filter_by(insta_user=username).first()
             if not user:
-                print("user isn't in the database")
+                print("User not found")
                 return
-            #deelte old engagment scores for this user 
-            session.query(EngagementScore).filter_by(user_id = user.id).delete(0)
-
-            #save new scores 
-
-            for follower_username, data in engagement_results.items():
-                score_record = EngagementScore(
-
-                    user_id = user.id, 
-                    follower_username = follower_username, 
-                    total_score = data['score'], 
-                    likes_count = data['likes_count'],
-                    comments_count = data['comments_count'],
-                    engagement_level = data['level']
-                )
-            session.commit()
-            print(f"\n Saved {len(engagement_results)} engagement scores to database")
-
-            #show summary 
-            high = sum(1 for d in engagement_results.values() if d['level'] == 'High')
-            medium= sum(1 for d in engagement_results.values() if d['level'] == 'Medium')
-            low = sum(1 for d in engagement_results.values() if d['level'] == 'Low')
-
-            print(f"\n🔥 High Engagement: {high} followers")
-            print(f"⚡ Medium Engagement: {medium} followers")
-            print(f"❄️  Low Engagement: {low} followers")
-
+            
+            relationships = session.query(FollowRelationship).filter_by(user_id=user.id).all()
+            
+            following = [r for r in relationships if r.i_follow_them]
+            mutual = [r for r in relationships if r.i_follow_them and r.they_follow_me]
+            not_following_back = [r for r in relationships if r.i_follow_them and not r.they_follow_me]
+            
+            print("\n" + "="*60)
+            print(f"📊 INSTAGRAM STATS FOR @{username}")
+            print("="*60)
+            print(f"You follow:           {len(following)} accounts")
+            print(f"Follow you back:      {len(mutual)} accounts")
+            print(f"Don't follow back:    {len(not_following_back)} accounts")
+            print("="*60)
+            
+            if not_following_back:
+                print(f"\n❌ ACCOUNTS NOT FOLLOWING YOU BACK ({len(not_following_back)}):")
+                for r in not_following_back[:50]:
+                    print(f"   • @{r.username}")
+                if len(not_following_back) > 50:
+                    print(f"   ... and {len(not_following_back) - 50} more")
+            
+            print("\n" + "="*60)
+            
         except Exception as e:
-            print(f"Error saving engagment scores: {e}")
-            session.rollbacl()
+            print(f"Error: {e}")
         finally:
-            session.close()            
+            session.close()
 
-
-
-
-
-
-
-
-# This code runs when you execute the script
-
-# This code runs when you execute the script
 if __name__ == "__main__":
     scraper = InstagramScraper()
-    scraper.login("username", "Godisgood123!")
     
-    # Get followers
-    followers = scraper.get_followers("username")
+    scraper.login("roriforrealzz", "Godisgood123!")
     
-    # Analyze engagement (WARNING: This will take a while!)
-    engagement_results = scraper.analyze_follower_engagement("username", followers)
+    if not scraper.is_logged_in:
+        print("Login failed!")
+        scraper.driver.quit()
+        exit()
     
-    # Save to database
-    scraper.save_engagement_scores("username", engagement_results)
+    following = scraper.get_following("roriforrealzz")
+    followers = scraper.get_followers("roriforrealzz")
     
-    # Show top engagers
-    sorted_followers = sorted(
-        engagement_results.items(),
-        key=lambda x: x[1]['score'],
-        reverse=True
-    )
+    unfollowers = scraper.find_unfollowers(following, followers)
+    print(f"\n🚨 {len(unfollowers)} people don't follow you back")
     
-    print("\n=== TOP 10 MOST ENGAGED FOLLOWERS ===")
-    for i, (username, data) in enumerate(sorted_followers[:10]):
-        print(f"{i+1}. @{username}")
-        print(f"   Level: {data['level']} ({data['score']}/100)")
-        print(f"   Likes: {data['likes_count']}, Comments: {data['comments_count']}\n")
+    scraper.save_to_database("roriforrealzz", following, followers)
+    scraper.print_database_summary("roriforrealzz")
     
-    input("Press Enter to close...")
+    print("\n⚠️  NOTE: Instagram heavily rate-limits scrapers.")
+    print("If you only got 12 accounts, Instagram is blocking the modal from loading.")
+    print("Try again in a few hours or from a different IP address.")
+    
+    input("\nPress Enter to close...")
     scraper.driver.quit()
