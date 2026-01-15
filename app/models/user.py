@@ -14,6 +14,7 @@ class User(Base):
     is_active = Column(Boolean, default = True, nullable = False)
     created_at = Column(DateTime, default=func.now())
     relationship: Mapped[List["FollowRelationship"]] = relationship(back_populates = "user") #we're using list because we're tracking many users under the follow relaitonship
+    engagement_scores= relationship("EngagementScore", back_populates = "user")
 class FollowRelationship(Base):
     __tablename__ ="follower_relationships"
     id = Column(Integer, primary_key = True)
@@ -26,10 +27,6 @@ class FollowRelationship(Base):
     they_follow_me= Column(Boolean,default = False ) #this could be either true of false depending 
     last_checked = Column(DateTime,default = func.now())
     user : Mapped["User"] = relationship(back_populates = "relationship")
-
-class EngagementScore:
-    __tablename__ = "engagement_score"
-    id = Column(Integer, primary_key = True)
-    #note that when using back_poulates, conect it to the attrivuate not the class. 
+#note that when using back_poulates, conect it to the attrivuate not the class. 
 #want to go from follower relationship to user 
 #and user relaitosnhip to user  but we cna just add mapping to the two classes we have above
