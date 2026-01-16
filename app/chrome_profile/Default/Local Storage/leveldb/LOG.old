@@ -1,6 +1,14 @@
-2026/01/13-18:40:48.401 b0df1 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
-2026/01/13-18:40:48.406 b0df1 Recovering log #10
-2026/01/13-18:40:48.408 b0df1 Reusing old log /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/000010.log 
-2026/01/13-18:41:03.276 b0df7 Level-0 table #14: started
-2026/01/13-18:41:03.284 b0df7 Level-0 table #14: 17200 bytes OK
-2026/01/13-18:41:03.296 b0df7 Delete type=0 #10
+2026/01/14-23:31:27.784 59983 Reusing MANIFEST /Users/doublehole/Instragram follower tracker /Instagram-Unfollower-Tracker/app/chrome_profile/Default/Local Storage/leveldb/MANIFEST-000001
+2026/01/14-23:31:27.788 59983 Recovering log #26
+2026/01/14-23:31:27.789 59983 Level-0 table #29: started
+2026/01/14-23:31:27.801 59983 Level-0 table #29: 20347 bytes OK
+2026/01/14-23:31:27.807 59983 Delete type=0 #26
+2026/01/14-23:31:27.817 59986 Compacting 4@0 + 1@1 files
+2026/01/14-23:31:27.825 59986 Generated table #31@0: 700 keys, 57355 bytes
+2026/01/14-23:31:27.825 59986 Compacted 4@0 + 1@1 files => 57355 bytes
+2026/01/14-23:31:27.826 59986 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/01/14-23:31:27.828 59986 Delete type=2 #29
+2026/01/14-23:31:27.828 59986 Delete type=2 #21
+2026/01/14-23:31:27.828 59986 Delete type=2 #27
+2026/01/14-23:31:27.828 59986 Delete type=2 #18
+2026/01/14-23:31:27.828 59986 Delete type=2 #24
